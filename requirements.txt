@@ -1,0 +1,35 @@
+# ChessInsight - Dependencies
+# Team 029 - CSE6242 Spring 2026
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+python-chess>=1.10.0
+pyarrow>=14.0.0
+
+# Machine Learning
+scikit-learn>=1.3.0
+xgboost>=2.0.0
+imbalanced-learn>=0.11.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.18.0
+
+# Dimensionality Reduction & Clustering
+umap-learn>=0.5.0
+
+# Progress bars
+tqdm>=4.66.0
+
+# API requests (for Lichess API)
+requests>=2.31.0
+berserk>=0.13.0
+
+# Jupyter notebooks
+jupyter>=1.0.0
+ipykernel>=6.25.0
+
+# Utilities
+python-dotenv>=1.0.0
