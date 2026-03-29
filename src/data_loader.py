@@ -18,6 +18,9 @@ import sys
 sys.path.append(str(Path(__file__).parent.parent))
 from config import RAW_DATA_DIR, PROCESSED_DATA_DIR, SKILL_TIERS, VALID_TIME_CONTROLS
 
+# Number of rows per parquet chunk file
+CHUNK_SIZE = 1000
+
 
 def download_lichess_sample(output_path: Optional[Path] = None,
                             num_games: int = 10000) -> Path:
@@ -277,25 +280,81 @@ def create_games_dataframe(games: List[Dict]) -> pd.DataFrame:
     return pd.DataFrame(game_records)
 
 
+def split_dataframe_to_parquet_chunks(
+    df: pd.DataFrame,
+    output_dir: Path,
+    prefix: str,
+    chunk_size: int = CHUNK_SIZE
+) -> List[Path]:
+    """
+    Split a DataFrame into multiple parquet files, each containing up to
+    `chunk_size` rows. Files are saved as:
+        <output_dir>/chunks/<prefix>_part_0000.parquet
+        <output_dir>/chunks/<prefix>_part_0001.parquet
+        ...
+
+    This makes each file small enough to commit to GitHub individually,
+    enabling asynchronous / parallel pushes without hitting the 100 MB
+    per-file limit.
+
+    To read all chunks back as a single DataFrame later, simply pass the
+    chunks directory to pandas:
+        df = pd.read_parquet("<output_dir>/chunks/")
+
+    Args:
+        df:         The source DataFrame to split.
+        output_dir: Parent directory under which a 'chunks' subfolder is created.
+        prefix:     Filename prefix, e.g. 'games_processed' or 'games_full'.
+        chunk_size: Maximum number of rows per file (default: 1000).
+
+    Returns:
+        List of Path objects for every chunk file written.
+    """
+    chunks_dir = output_dir / "chunks"
+    chunks_dir.mkdir(parents=True, exist_ok=True)
+
+    chunk_paths: List[Path] = []
+    total_rows = len(df)
+    num_chunks = (total_rows + chunk_size - 1) // chunk_size  # ceiling division
+
+    print(f"Splitting {total_rows} rows into {num_chunks} chunk(s) "
+          f"of up to {chunk_size} rows each → {chunks_dir}")
+
+    for chunk_index, start_row in enumerate(range(0, total_rows, chunk_size)):
+        chunk_df = df.iloc[start_row: start_row + chunk_size]
+        chunk_filename = f"{prefix}_part_{chunk_index:04d}.parquet"
+        chunk_path = chunks_dir / chunk_filename
+        chunk_df.to_parquet(chunk_path, index=False)
+        chunk_paths.append(chunk_path)
+        print(f"  Saved chunk {chunk_index:04d}: {chunk_filename} "
+              f"({len(chunk_df)} rows)")
+
+    print(f"Done — {len(chunk_paths)} chunk file(s) written to {chunks_dir}")
+    return chunk_paths
+
+
 def load_or_create_dataset(pgn_path: Optional[Path] = None,
                            max_games: int = 10000,
                            force_reload: bool = False) -> pd.DataFrame:
     """
     Load processed dataset or create it from PGN file.
+    Parquet output is automatically split into CHUNK_SIZE-row files
+    inside <PROCESSED_DATA_DIR>/chunks/ for lightweight GitHub storage.
 
     Args:
         pgn_path: Path to PGN file (uses sample if None)
         max_games: Maximum games to process
-        force_reload: Force re-processing even if cached file exists
+        force_reload: Force re-processing even if cached chunks exist
 
     Returns:
         DataFrame with processed game data
     """
-    cache_path = PROCESSED_DATA_DIR / "games_processed.parquet"
+    chunks_dir = PROCESSED_DATA_DIR / "chunks"
+    existing_chunks = sorted(chunks_dir.glob("games_processed_part_*.parquet"))
 
-    if cache_path.exists() and not force_reload:
-        print(f"Loading cached dataset from {cache_path}")
-        return pd.read_parquet(cache_path)
+    if existing_chunks and not force_reload:
+        print(f"Loading cached dataset from {len(existing_chunks)} chunk(s) in {chunks_dir}")
+        return pd.read_parquet(chunks_dir)
 
     if pgn_path is None:
         pgn_path = RAW_DATA_DIR / "lichess_sample.pgn"
@@ -309,15 +368,13 @@ def load_or_create_dataset(pgn_path: Optional[Path] = None,
     games = list(tqdm(parse_pgn_file(pgn_path, max_games),
                       total=max_games, desc="Parsing games"))
 
+    # Build summary DataFrame and split into chunks
     df = create_games_dataframe(games)
+    split_dataframe_to_parquet_chunks(df, PROCESSED_DATA_DIR, "games_processed")
 
-    # Save processed data
-    df.to_parquet(cache_path)
-    print(f"Saved processed dataset to {cache_path}")
-
-    # Also save full game data with moves for feature extraction
-    games_full_path = PROCESSED_DATA_DIR / "games_full.parquet"
-    pd.DataFrame(games).to_parquet(games_full_path)
+    # Build full DataFrame (with moves) and split into chunks
+    games_full_df = pd.DataFrame(games)
+    split_dataframe_to_parquet_chunks(games_full_df, PROCESSED_DATA_DIR, "games_full")
 
     return df
 
