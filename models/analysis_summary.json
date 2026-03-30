@@ -18,13 +18,14 @@
   },
   "clustering": {
     "method": "kmeans",
-    "n_clusters": 4,
-    "silhouette_score": "0.1589",
+    "n_clusters": 5,
+    "silhouette_score": "0.1635",
     "archetypes": {
       "0": "Deliberate Player",
-      "1": "Fast Player",
+      "1": "Advanced Player",
       "2": "Fast Player",
-      "3": "Deliberate Player"
+      "3": "Deliberate Player",
+      "4": "Fast Player"
     }
   }
 }

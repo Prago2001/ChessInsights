@@ -1,11 +1,11 @@
 {
   "method": "kmeans",
-  "n_clusters": 4,
+  "n_clusters": 5,
   "metrics": {
-    "silhouette_score": 0.15891215243228554,
-    "calinski_harabasz_index": 3199.963435621829,
-    "davies_bouldin_index": 1.538445759044166,
-    "pca_explained_variance": 0.8791251253402435
+    "silhouette_score": 0.16351679394079197,
+    "calinski_harabasz_index": 3283.3325960819466,
+    "davies_bouldin_index": 1.4900024629820368,
+    "pca_explained_variance": 0.8512291726000596
   },
   "cluster_names": {
     "0": {
@@ -15,28 +15,28 @@
         "deliberate",
         "intermediate"
       ],
-      "size": 2789,
-      "avg_elo": 1469.874338676969
+      "size": 1338,
+      "avg_elo": 1485.2487147075578
     },
     "1": {
-      "name": "Fast Player",
-      "description": "Players characterized by fast, advanced play style",
+      "name": "Advanced Player",
+      "description": "Players characterized by advanced play style",
       "characteristics": [
-        "fast",
         "advanced"
       ],
-      "size": 8050,
-      "avg_elo": 1592.570533049783
+      "size": 7794,
+      "avg_elo": 1563.160342286853
     },
     "2": {
       "name": "Fast Player",
-      "description": "Players characterized by fast, advanced play style",
+      "description": "Players characterized by fast, time-scrambler, advanced play style",
       "characteristics": [
         "fast",
+        "time-scrambler",
         "advanced"
       ],
-      "size": 11803,
-      "avg_elo": 1825.868789165815
+      "size": 8468,
+      "avg_elo": 1795.7815302011484
     },
     "3": {
       "name": "Deliberate Player",
@@ -45,8 +45,18 @@
         "deliberate",
         "advanced"
       ],
-      "size": 83,
-      "avg_elo": 1773.9791769573842
+      "size": 82,
+      "avg_elo": 1779.858326811878
+    },
+    "4": {
+      "name": "Fast Player",
+      "description": "Players characterized by fast, advanced play style",
+      "characteristics": [
+        "fast",
+        "advanced"
+      ],
+      "size": 5043,
+      "avg_elo": 1803.3870797596776
     }
   }
 }
