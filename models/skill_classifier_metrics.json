@@ -1,0 +1,20 @@
+{
+  "model_type": "random_forest",
+  "metrics": {
+    "val_accuracy": 0.4256039234760052,
+    "test_accuracy": 0.4253521126760563,
+    "adjacent_accuracy": 0.5576856824399635,
+    "macro_precision": 0.41792173065863236,
+    "macro_recall": 0.4446229203376917,
+    "macro_f1": 0.423644975086016
+  },
+  "class_distribution": {
+    "Advanced": 124261,
+    "Intermediate": 95896,
+    "Expert": 66666,
+    "Beginner": 42138
+  },
+  "train_size": 230272,
+  "val_size": 49344,
+  "test_size": 49345
+}

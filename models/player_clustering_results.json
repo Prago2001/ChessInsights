@@ -1,0 +1,52 @@
+{
+  "method": "kmeans",
+  "n_clusters": 4,
+  "metrics": {
+    "silhouette_score": 0.15891215243228554,
+    "calinski_harabasz_index": 3199.963435621829,
+    "davies_bouldin_index": 1.538445759044166,
+    "pca_explained_variance": 0.8791251253402435
+  },
+  "cluster_names": {
+    "0": {
+      "name": "Deliberate Player",
+      "description": "Players characterized by deliberate, intermediate play style",
+      "characteristics": [
+        "deliberate",
+        "intermediate"
+      ],
+      "size": 2789,
+      "avg_elo": 1469.874338676969
+    },
+    "1": {
+      "name": "Fast Player",
+      "description": "Players characterized by fast, advanced play style",
+      "characteristics": [
+        "fast",
+        "advanced"
+      ],
+      "size": 8050,
+      "avg_elo": 1592.570533049783
+    },
+    "2": {
+      "name": "Fast Player",
+      "description": "Players characterized by fast, advanced play style",
+      "characteristics": [
+        "fast",
+        "advanced"
+      ],
+      "size": 11803,
+      "avg_elo": 1825.868789165815
+    },
+    "3": {
+      "name": "Deliberate Player",
+      "description": "Players characterized by deliberate, advanced play style",
+      "characteristics": [
+        "deliberate",
+        "advanced"
+      ],
+      "size": 83,
+      "avg_elo": 1773.9791769573842
+    }
+  }
+}

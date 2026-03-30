@@ -1,0 +1,30 @@
+{
+  "dataset": {
+    "total_games": 350060,
+    "unique_players": 238200,
+    "rating_range": "600 - 3265",
+    "data_source": "Lichess Database (data_1m_games.pgn)"
+  },
+  "features": {
+    "game_level_features": 39,
+    "player_level_features": 30,
+    "players_analyzed": 22725
+  },
+  "classification": {
+    "model_type": "random_forest",
+    "test_accuracy": "42.5%",
+    "adjacent_accuracy": "55.8%",
+    "macro_f1": "0.4236"
+  },
+  "clustering": {
+    "method": "kmeans",
+    "n_clusters": 4,
+    "silhouette_score": "0.1589",
+    "archetypes": {
+      "0": "Deliberate Player",
+      "1": "Fast Player",
+      "2": "Fast Player",
+      "3": "Deliberate Player"
+    }
+  }
+}
