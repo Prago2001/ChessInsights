@@ -2,38 +2,38 @@
 
 ## 1. Introduction
 
-ChessInsight aims to build an interactive visual analytics system that reveals how chess gameplay patterns—such as time usage, blunders, and position complexity—vary across skill levels, and to predict a player’s skill tier from their behavioral traces rather than raw Elo.[file:1][file:12] The motivation is that existing tools like online analysis boards explain *what* happened in a single game, but do not aggregate *how* thousands of players behave, nor why players at different skill levels make systematically different decisions under time pressure.[file:1][file:12]
+ChessInsight aims to build an interactive visual analytics system that reveals how chess gameplay patterns—such as time usage, blunders, and position complexity—vary across skill levels, and to predict a player’s skill tier from their behavioral traces rather than raw Elo. The motivation is that existing tools like online analysis boards explain *what* happened in a single game, but do not aggregate *how* thousands of players behave, nor why players at different skill levels make systematically different decisions under time pressure.
 
-Our system ingests a large Lichess PGN dataset (350,060 games), derives game- and player-level features, trains a skill-tier classifier, discovers player archetypes via clustering, and surfaces these results in a visualization-ready format for dashboards.[file:1][file:12] This report summarizes our progress halfway through the semester and outlines remaining work and risks, following the course progress-report guidelines.[file:2]
+Our system ingests a large Lichess PGN dataset (350,060 games), derives game- and player-level features, trains a skill-tier classifier, discovers player archetypes via clustering, and surfaces these results in a visualization-ready format for dashboards. This report summarizes our progress halfway through the semester and outlines remaining work and risks, following the course progress-report guidelines.
 
 ## 2. Problem definition
 
 We address two tightly coupled problems:
 
-1. **Behavior-aware skill inference.** Given a player’s moves, clock times, and engine evaluations across many games, infer a discrete skill tier (Beginner, Intermediate, Advanced, Expert) that reflects *behavioral quality* rather than just rating.[file:1][file:12]
-2. **Discovery of behavioral archetypes.** Using aggregated behavioral features, cluster players into interpretable archetypes (for example, “time scramblers,” “positional grinders”) that help coaches and players understand common patterns and failure modes.[file:1][file:12]
+1. **Behavior-aware skill inference.** Given a player’s moves, clock times, and engine evaluations across many games, infer a discrete skill tier (Beginner, Intermediate, Advanced, Expert) that reflects *behavioral quality* rather than just rating.
+2. **Discovery of behavioral archetypes.** Using aggregated behavioral features, cluster players into interpretable archetypes (for example, “time scramblers,” “positional grinders”) that help coaches and players understand common patterns and failure modes.
 
 Formally, we model each player as a vector of aggregated statistics over their games (time usage per phase, position complexity, error rates, opening style), and we learn:
 
 - A supervised mapping from features to skill tiers using Elo-derived labels.
-- An unsupervised mapping from features to behavioral clusters using k-means and related algorithms.[file:1][file:12]
+- An unsupervised mapping from features to behavioral clusters using k-means and related algorithms.
 
-The downstream visual interface will support tasks such as exploring where a player lives in the behavioral map, how their time usage compares to peers, and which archetypes correlate with faster improvement.[file:1]
+The downstream visual interface will support tasks such as exploring where a player lives in the behavioral map, how their time usage compares to peers, and which archetypes correlate with faster improvement.
 
 ## 3. Literature survey (current status)
 
-We have completed an initial literature survey covering four themes, as documented in our proposal:[file:1][file:12]
+We have completed an initial literature survey covering four themes, as documented in our proposal:
 
-- **Player modeling and skill prediction.** Maia Chess and follow-up work show that neural models can match human move choices at specific Elo ranges, while other studies use gradient boosting and CNN–LSTM models to estimate ratings and outcomes from moves and clock times.[file:1][file:12]
-- **Time pressure and decision making.** Psychological and economic studies analyze how time pressure affects depth of search and risk-taking, informing our choice of time-usage features and time-trouble indicators.[file:1][file:12]
-- **Clustering of playing styles.** Prior work clusters behavior in other games and quantifies opening complexity in chess, motivating our use of behavioral clustering and complexity features.[file:1][file:12]
-- **Visual analytics for chess.** Existing systems focus on single-game visualizations or elite-player studies; none provide large-scale, population-level dashboards for mixed-strength online players.[file:1][file:12]
+- **Player modeling and skill prediction.** Maia Chess and follow-up work show that neural models can match human move choices at specific Elo ranges, while other studies use gradient boosting and CNN–LSTM models to estimate ratings and outcomes from moves and clock times.
+- **Time pressure and decision making.** Psychological and economic studies analyze how time pressure affects depth of search and risk-taking, informing our choice of time-usage features and time-trouble indicators.
+- **Clustering of playing styles.** Prior work clusters behavior in other games and quantifies opening complexity in chess, motivating our use of behavioral clustering and complexity features.
+- **Visual analytics for chess.** Existing systems focus on single-game visualizations or elite-player studies; none provide large-scale, population-level dashboards for mixed-strength online players.
 
-Before the final report, we plan to (1) expand the survey with a few more recent visual analytics and clustering papers, and (2) tighten the mapping from each paper’s contributions to specific design and modeling choices in ChessInsight.[file:2]
+Before the final report, we plan to (1) expand the survey with a few more recent visual analytics and clustering papers, and (2) tighten the mapping from each paper’s contributions to specific design and modeling choices in ChessInsight.
 
 ## 4. Proposed method and current implementation
 
-Our proposed pipeline has four main components—data/feature processing, skill-tier classification, behavioral clustering, and interactive visualization.[file:1][file:12] As of this progress report, the first three components are implemented end-to-end, and the visualization layer has initial wireframes and static plots.
+Our proposed pipeline has four main components—data/feature processing, skill-tier classification, behavioral clustering, and interactive visualization. As of this progress report, the first three components are implemented end-to-end, and the visualization layer has initial wireframes and static plots.
 
 ### 4.1 Data ingestion and preprocessing
 
@@ -65,10 +65,10 @@ The training script saves the fitted model, feature importance table, confusion 
 
 We aggregate player-level features and run behavioral clustering to discover archetypes:[cite:9][cite:10]
 
-- Standardize features and apply PCA to 10 components, which explain ~85% of variance.[cite:9]
-- Evaluate k in the range 3–7 with k-means using silhouette, Calinski–Harabasz, and Davies–Bouldin indices; k = 5 achieves the best silhouette score.[cite:3][cite:9]
+- Standardize features and apply PCA to 10 components, which explain about 88% of variance in the current run.[cite:9][cite:17]
+- Evaluate k in the range 3–7 with k-means using silhouette, Calinski–Harabasz, and Davies–Bouldin indices; k = 5 achieves the best silhouette score among the tested k values.[cite:3][cite:9]
 - Run final k-means with **k = 5**, then compute t-SNE embeddings for 2D visualization.[cite:9]
-- Use the updated `name_clusters` logic to assign unique, behavior- and skill-aware archetype names to each cluster (for example, “Intermediate Developing Positional Grinder”, “Advanced Elite Speed Demon”), removing earlier label collisions.[cite:3][cite:9][cite:10]
+- Use the updated `name_clusters` logic to assign unique, behavior- and skill-aware archetype names to each cluster (for example, “Intermediate Deliberate Player”, “Advanced Fast Player #2”), removing earlier label collisions.[cite:3][cite:9][cite:18]
 
 We compute per-cluster statistics (size, Elo distribution, game counts, skill-tier mix, and key feature means) and store both CSV summaries and JSON metadata for the dashboard.[cite:9][cite:10]
 
@@ -87,12 +87,12 @@ We also created a **dashboard wireframe** image that sketches the intended layou
 
 ### 5.1 Skill-tier classification performance
 
-Using the saved metrics and confusion matrix, the current random forest baseline achieves:[cite:6][cite:8]
+Using the saved metrics and confusion matrix, the current random forest baseline achieves:[cite:6][cite:8][cite:19]
 
-- **Validation accuracy:** 42.3%.
-- **Test accuracy:** 42.5% (exact tier).
-- **Adjacent accuracy (±1 tier):** 55.8%.
-- **Macro precision / recall / F1:** approximately 0.42–0.45, indicating balanced performance across tiers despite class imbalance.
+- **Validation accuracy:** approximately 42.3%.
+- **Test accuracy:** **42.6%** (exact tier).
+- **Adjacent accuracy (±1 tier):** **55.6%**.
+- **Macro F1:** approximately **0.425**.
 
 Error analysis shows most mistakes occur between adjacent tiers (e.g., Intermediate vs. Advanced, Advanced vs. Expert), which is expected given fuzzy boundaries between skill levels.[cite:8] Beginners are recognized more reliably, with fewer predictions leaking into higher tiers.
 
@@ -104,22 +104,19 @@ Error analysis shows most mistakes occur between adjacent tiers (e.g., Intermedi
 
 ### 5.2 Clustering quality and interpretability
 
-The current k-means model with k = 5 yields the following metrics:[cite:9]
+The current k-means model with k = 5 yields the following metrics:[cite:9][cite:18][cite:19]
 
-- **Silhouette score:** 0.16.
-- **Calinski–Harabasz index:** 3,283.
-- **Davies–Bouldin index:** 1.49.
+- **Silhouette score:** **0.21**.
+- **Calinski–Harabasz index:** **3440.3**.
+- **Davies–Bouldin index:** **1.35**.
 
-From the saved statistics, we observe the following archetypal patterns:[cite:9][cite:10]
+From the saved statistics, we observe several archetypal patterns, such as an **Intermediate Deliberate Player** cluster and multiple **Advanced Fast Player** clusters with slightly different Elo bands and sizes, capturing the trade-off between speed and deliberation at higher skill levels.[cite:18]
 
-- A **deliberate, intermediate** cluster (≈6% of players, Elo ≈ 1485) with long move times and moderate error rates.
-- A large **solid advanced** cluster (≈34%, Elo ≈ 1560) with stable time usage and mostly Advanced players.
-- Two **fast, high-Elo** clusters (≈37% and 22%, Elo ≈ 1796–1803) that frequently reach time trouble but still perform well.
-- A small **deliberate expert** cluster (≈0.4%, Elo ≈ 1780) characterized by long think times and a high fraction of Advanced/Expert players.
+We have updated the `name_clusters` function to produce **unique, semantically richer archetype names** (for example, “Intermediate Deliberate Player”, “Advanced Fast Player #2”) based on behavior and dominant skill tier, eliminating earlier name collisions.[cite:3][cite:18]
 
-We have updated the `name_clusters` function to produce **unique, semantically richer archetype names** (for example, “Advanced Elite Speed Demon”, “Intermediate Developing Positional Grinder”) based on behavior, dominant skill tier, and Elo buckets, eliminating earlier name collisions.[cite:3][cite:9]
+In addition, we have integrated a new `compare_clustering_methods` helper into `run_analysis.py` to benchmark k-means against Gaussian Mixture Models, hierarchical clustering, DBSCAN, and Birch on the same feature matrix; a CSV report with metrics for each method is saved for offline analysis.[cite:3][cite:17]
 
-In addition, we have integrated a new `compare_clustering_methods` helper into `run_analysis.py` to benchmark k-means against Gaussian Mixture Models, hierarchical clustering, DBSCAN, and Birch on the same feature matrix; a CSV report with metrics for each method is saved for offline analysis.[cite:3]
+From the latest comparison, **Birch** achieves the highest silhouette score (≈0.29) and the lowest Davies–Bouldin index (≈1.02), outperforming k-means (silhouette ≈0.21, DB ≈1.35) on these internal clustering metrics, while k-means attains the highest Calinski–Harabasz score.[cite:17] For now we keep k-means as the primary method in the pipeline because it is simple and well-understood, and we treat Birch as a promising alternative to be explored further in the final phase of the project.
 
 **Planned evaluation work:**
 
@@ -131,11 +128,11 @@ In addition, we have integrated a new `compare_clustering_methods` helper into `
 
 ### 6.1 Current status relative to plan
 
-According to our original Gantt chart, by the midpoint we aimed to have a working classifier with >50% accuracy plus initial clusters; by the final report we target an accuracy of at least 65% and a complete interactive dashboard.[file:1][file:12]
+According to our original Gantt chart, by the midpoint we aimed to have a working classifier with >50% accuracy plus initial clusters; by the final report we target an accuracy of at least 65% and a complete interactive dashboard.
 
 - We have fully implemented **data processing, feature extraction, classification, and clustering**, with all intermediate artifacts saved under `data/processed` and `models/`.[cite:3][cite:5]
-- The classifier currently reaches ~42.5% exact-tier accuracy and 55.8% adjacent accuracy, which is slightly below the original 50% target but provides a realistic baseline.[cite:6]
-- Clustering produces 5 interpretable archetypes with reasonable separation metrics and has been wired into the analysis pipeline and visualization assets.[cite:9]
+- The classifier currently reaches about **42.6%** exact-tier accuracy and **55.6%** adjacent accuracy, which is slightly below the original 50% midterm target but provides a realistic baseline.[cite:19]
+- Clustering produces 5 interpretable archetypes with reasonable separation metrics and has been wired into the analysis pipeline and visualization assets.[cite:18][cite:19]
 
 Overall, we are on track in terms of pipeline completeness, but we must focus the second half of the semester on **improving model quality** and **building the interactive UI**.
 
@@ -149,10 +146,10 @@ For the remainder of the semester, our priorities are:
 
 ### 6.3 Risks and mitigation
 
-- **Model performance risk.** Achieving ≥65% skill-tier accuracy may be challenging given noisy behavioral labels. We will mitigate this by exploring more expressive models, feature engineering, and possibly redefining the task in terms of coarser tiers or regression to Elo buckets.[file:1][file:12]
-- **Cluster interpretability risk.** Some clusters may remain hard to interpret or unstable under resampling. Our mitigation is to (a) compare multiple clustering methods, (b) tie names directly to transparent statistics (time usage, Elo, error rates), and (c) use the dashboard to surface explanations rather than only labels.[cite:3][cite:9]
-- **Time and implementation risk.** Building a polished interactive dashboard can be time-consuming. We will scope the UI carefully: prioritize a small set of high-impact coordinated views (behavioral map, time-usage heatmap, archetype comparison) over many partial features.[file:2]
+- **Model performance risk.** Achieving ≥65% skill-tier accuracy may be challenging given noisy behavioral labels. We will mitigate this by exploring more expressive models, feature engineering, and possibly redefining the task in terms of coarser tiers or regression to Elo buckets.
+- **Cluster interpretability risk.** Some clusters may remain hard to interpret or unstable under resampling. Our mitigation is to (a) compare multiple clustering methods, (b) tie names directly to transparent statistics (time usage, Elo, error rates), and (c) use the dashboard to surface explanations rather than only labels.[cite:3][cite:9][cite:17]
+- **Time and implementation risk.** Building a polished interactive dashboard can be time-consuming. We will scope the UI carefully: prioritize a small set of high-impact coordinated views (behavioral map, time-usage heatmap, archetype comparison) over many partial features.
 
 ### 6.4 Effort statement
 
-So far, all team members have contributed a similar amount of effort in literature review, data processing, modeling, and documentation. We expect effort to remain balanced as we move into model refinement and dashboard implementation.[file:2]
+So far, all team members have contributed a similar amount of effort in literature review, data processing, modeling, and documentation. We expect effort to remain balanced as we move into model refinement and dashboard implementation.
