@@ -11,10 +11,11 @@ import pickle
 import json
 
 from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
+from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering, Birch
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.mixture import GaussianMixture
 
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
@@ -95,14 +96,16 @@ def find_optimal_k(X: np.ndarray,
 
 def perform_clustering(X: pd.DataFrame,
                        n_clusters: int = 5,
-                       method: str = 'kmeans') -> Dict:
+                       method: str = 'kmeans',
+                       compute_embedding: bool = True) -> Dict:
     """
     Perform clustering on player features.
 
     Args:
         X: Feature matrix (DataFrame)
         n_clusters: Number of clusters
-        method: Clustering method ('kmeans', 'hierarchical', 'dbscan')
+        method: Clustering method ('kmeans', 'hierarchical', 'dbscan', 'gmm', 'birch')
+        compute_embedding: Whether to compute a 2D t-SNE embedding (expensive)
 
     Returns:
         Dictionary with clustering results
@@ -137,6 +140,16 @@ def perform_clustering(X: pd.DataFrame,
         cluster_centers = None
         print(f"DBSCAN found {n_clusters} clusters")
 
+    elif method == 'gmm':
+        model = GaussianMixture(n_components=n_clusters, random_state=RANDOM_STATE)
+        labels = model.fit_predict(X_pca)
+        cluster_centers = model.means_
+
+    elif method == 'birch':
+        model = Birch(n_clusters=n_clusters)
+        labels = model.fit_predict(X_pca)
+        cluster_centers = getattr(model, 'subcluster_centers_', None)
+
     else:
         raise ValueError(f"Unknown clustering method: {method}")
 
@@ -148,16 +161,18 @@ def perform_clustering(X: pd.DataFrame,
     else:
         silhouette = calinski = davies = 0
 
-    print(f"Clustering metrics:")
+    print("Clustering metrics:")
     print(f"  Silhouette Score: {silhouette:.4f}")
     print(f"  Calinski-Harabasz Index: {calinski:.1f}")
     print(f"  Davies-Bouldin Index: {davies:.4f}")
 
     # Get 2D embedding for visualization using t-SNE (per proposal)
-    print("Computing t-SNE embedding for visualization...")
-    tsne = TSNE(n_components=2, random_state=RANDOM_STATE, perplexity=min(30, len(X_pca) - 1))
-    embedding_2d = tsne.fit_transform(X_pca)
-    print("t-SNE embedding complete")
+    embedding_2d = None
+    if compute_embedding:
+        print("Computing t-SNE embedding for visualization...")
+        tsne = TSNE(n_components=2, random_state=RANDOM_STATE, perplexity=min(30, len(X_pca) - 1))
+        embedding_2d = tsne.fit_transform(X_pca)
+        print("t-SNE embedding complete")
 
     results = {
         'model': model,
@@ -175,12 +190,43 @@ def perform_clustering(X: pd.DataFrame,
             'pca_explained_variance': explained_variance
         },
         'embedding_2d': embedding_2d,
-        'embedding_method': 'tsne',  # Per proposal: t-SNE for 2D visualization
+        'embedding_method': 'tsne' if compute_embedding else None,
         'X_scaled': X_scaled,
         'X_pca': X_pca
     }
 
     return results
+
+
+def compare_clustering_methods(X: pd.DataFrame,
+                               n_clusters: int,
+                               methods: Optional[List[str]] = None) -> pd.DataFrame:
+    """
+    Run multiple clustering algorithms on the same feature matrix and compare metrics.
+
+    This helper is intended for experimentation when exploring alternative
+    behavioral clustering techniques beyond k-means.
+    """
+    if methods is None:
+        methods = ['kmeans', 'hierarchical', 'dbscan', 'gmm', 'birch']
+
+    rows: List[Dict] = []
+    for method in methods:
+        try:
+            res = perform_clustering(X, n_clusters=n_clusters, method=method, compute_embedding=False)
+            m = res['metrics']
+            rows.append({
+                'method': method,
+                'n_clusters': res['n_clusters'],
+                'silhouette_score': m['silhouette_score'],
+                'calinski_harabasz_index': m['calinski_harabasz_index'],
+                'davies_bouldin_index': m['davies_bouldin_index'],
+                'pca_explained_variance': m['pca_explained_variance'],
+            })
+        except Exception as e:
+            print(f"Skipping method {method} due to error: {e}")
+
+    return pd.DataFrame(rows)
 
 
 def analyze_clusters(player_features: pd.DataFrame,
@@ -244,12 +290,20 @@ def name_clusters(cluster_stats: pd.DataFrame,
         labels: Cluster labels
 
     Returns:
-        Dictionary mapping cluster ID to name and description
+        Dictionary mapping cluster ID to name and description. Names are
+        guaranteed to be unique across clusters by incorporating skill tier
+        and Elo-level qualifiers when needed.
     """
     df = player_features.copy()
     df['cluster'] = labels
 
-    cluster_names = {}
+    cluster_names: Dict[int, Dict] = {}
+
+    # Pre-compute Elo buckets so we can add semantic qualifiers
+    elo_q1 = df['avg_elo'].quantile(0.25) if 'avg_elo' in df.columns else None
+    elo_q3 = df['avg_elo'].quantile(0.75) if 'avg_elo' in df.columns else None
+
+    used_names = set()
 
     # Define naming criteria based on feature patterns
     for _, row in cluster_stats.iterrows():
@@ -257,8 +311,8 @@ def name_clusters(cluster_stats: pd.DataFrame,
         cluster_data = df[df['cluster'] == cluster_id]
 
         # Analyze characteristics
-        characteristics = []
-        name = f"Cluster {cluster_id}"
+        characteristics: List[str] = []
+        base_name = f"Cluster {cluster_id}"
         description = ""
 
         # Check time management patterns
@@ -293,12 +347,14 @@ def name_clusters(cluster_stats: pd.DataFrame,
                 characteristics.append("time-scrambler")
 
         # Check skill distribution
+        dominant_tier_label: Optional[str] = None
         if 'skill_tier' in cluster_data.columns:
             dominant_tier = cluster_data['skill_tier'].mode()
             if len(dominant_tier) > 0:
-                characteristics.append(dominant_tier.iloc[0].lower())
+                dominant_tier_label = dominant_tier.iloc[0]
+                characteristics.append(dominant_tier_label.lower())
 
-        # Generate name based on characteristics
+        # Generate archetype name based on characteristics
         archetype_names = {
             ('fast', 'accurate'): ('Speed Demon', 'Fast, accurate players who maintain quality under time pressure'),
             ('fast', 'tactical'): ('Blitz Attacker', 'Aggressive players who play quickly but make tactical errors'),
@@ -309,19 +365,58 @@ def name_clusters(cluster_stats: pd.DataFrame,
             ('tactical',): ('Risk Taker', 'Players who make more mistakes but play aggressively'),
         }
 
-        # Find matching archetype
-        char_tuple = tuple(characteristics[:2]) if len(characteristics) >= 2 else tuple(characteristics)
+        # Use up to two behavioral traits (ignoring skill tiers for archetype key)
+        behavior_traits = [t for t in characteristics if t not in ['beginner', 'intermediate', 'advanced', 'expert']]
+        char_tuple = tuple(behavior_traits[:2]) if len(behavior_traits) >= 1 else tuple()
+
         if char_tuple in archetype_names:
-            name, description = archetype_names[char_tuple]
-        elif len(characteristics) > 0:
-            name = f"{characteristics[0].title()} Player"
-            description = f"Players characterized by {', '.join(characteristics)} play style"
+            base_name, description = archetype_names[char_tuple]
+        elif len(behavior_traits) > 0:
+            base_name = f"{behavior_traits[0].title()} Player"
+            description = f"Players characterized by {', '.join(behavior_traits)} play style"
         else:
-            name = f"Archetype {cluster_id + 1}"
-            description = f"Distinct player group with unique behavioral patterns"
+            base_name = f"Archetype {cluster_id + 1}"
+            description = "Distinct player group with unique behavioral patterns"
+
+        # Add Elo-based qualifier
+        elo_label: Optional[str] = None
+        if elo_q1 is not None and elo_q3 is not None and pd.notna(row['avg_elo']):
+            if row['avg_elo'] >= elo_q3:
+                elo_label = "Elite"
+            elif row['avg_elo'] <= elo_q1:
+                elo_label = "Developing"
+
+        # Build final name with skill tier and Elo qualifiers
+        qualifiers: List[str] = []
+        if dominant_tier_label is not None:
+            qualifiers.append(dominant_tier_label)
+        if elo_label is not None:
+            qualifiers.append(elo_label)
+
+        full_name = f"{' '.join(qualifiers)} {base_name}".strip() if qualifiers else base_name
+
+        # Ensure uniqueness across clusters
+        if full_name in used_names:
+            suffix = 2
+            candidate = f"{full_name} #{suffix}"
+            while candidate in used_names:
+                suffix += 1
+                candidate = f"{full_name} #{suffix}"
+            full_name = candidate
+
+        used_names.add(full_name)
+
+        # Enrich description with qualifiers
+        qualifier_phrases = []
+        if dominant_tier_label is not None:
+            qualifier_phrases.append(f"dominant skill tier {dominant_tier_label}")
+        if elo_label is not None:
+            qualifier_phrases.append(f"{elo_label.lower()} Elo range")
+        if qualifier_phrases:
+            description = f"{description} (typically {', '.join(qualifier_phrases)})."
 
         cluster_names[cluster_id] = {
-            'name': name,
+            'name': full_name,
             'description': description,
             'characteristics': characteristics,
             'size': int(row['size']),
@@ -428,7 +523,7 @@ if __name__ == "__main__":
         k_results = find_optimal_k(X.values, k_range=(3, 7))
         optimal_k = k_results['optimal_k']
 
-        # Perform clustering
+        # Perform clustering with the primary method (k-means)
         results = perform_clustering(X, n_clusters=optimal_k, method='kmeans')
 
         # Analyze clusters
