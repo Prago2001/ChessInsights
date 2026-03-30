@@ -2,61 +2,61 @@
   "method": "kmeans",
   "n_clusters": 5,
   "metrics": {
-    "silhouette_score": 0.16351679394079197,
-    "calinski_harabasz_index": 3283.3325960819466,
-    "davies_bouldin_index": 1.4900024629820368,
-    "pca_explained_variance": 0.8512291726000596
+    "silhouette_score": 0.20984153847298034,
+    "calinski_harabasz_index": 3440.2936916920007,
+    "davies_bouldin_index": 1.352616376329396,
+    "pca_explained_variance": 0.8764340828382429
   },
   "cluster_names": {
     "0": {
-      "name": "Deliberate Player",
-      "description": "Players characterized by deliberate, intermediate play style",
+      "name": "Intermediate Deliberate Player",
+      "description": "Players characterized by deliberate play style (typically dominant skill tier Intermediate).",
       "characteristics": [
         "deliberate",
         "intermediate"
       ],
-      "size": 1338,
-      "avg_elo": 1485.2487147075578
+      "size": 2456,
+      "avg_elo": 1452.5092469985875
     },
     "1": {
-      "name": "Advanced Player",
-      "description": "Players characterized by advanced play style",
-      "characteristics": [
-        "advanced"
-      ],
-      "size": 7794,
-      "avg_elo": 1563.160342286853
-    },
-    "2": {
-      "name": "Fast Player",
-      "description": "Players characterized by fast, time-scrambler, advanced play style",
+      "name": "Advanced Fast Player",
+      "description": "Players characterized by fast play style (typically dominant skill tier Advanced).",
       "characteristics": [
         "fast",
-        "time-scrambler",
         "advanced"
       ],
-      "size": 8468,
-      "avg_elo": 1795.7815302011484
+      "size": 5855,
+      "avg_elo": 1731.8683944099334
+    },
+    "2": {
+      "name": "Advanced Fast Player #2",
+      "description": "Players characterized by fast play style (typically dominant skill tier Advanced).",
+      "characteristics": [
+        "fast",
+        "advanced"
+      ],
+      "size": 4628,
+      "avg_elo": 1774.1135201383006
     },
     "3": {
-      "name": "Deliberate Player",
-      "description": "Players characterized by deliberate, advanced play style",
+      "name": "Advanced Deliberate Player",
+      "description": "Players characterized by deliberate play style (typically dominant skill tier Advanced).",
       "characteristics": [
         "deliberate",
         "advanced"
       ],
-      "size": 82,
-      "avg_elo": 1779.858326811878
+      "size": 83,
+      "avg_elo": 1773.9791769573842
     },
     "4": {
-      "name": "Fast Player",
-      "description": "Players characterized by fast, advanced play style",
+      "name": "Advanced Fast Player #3",
+      "description": "Players characterized by fast play style (typically dominant skill tier Advanced).",
       "characteristics": [
         "fast",
         "advanced"
       ],
-      "size": 5043,
-      "avg_elo": 1803.3870797596776
+      "size": 9703,
+      "avg_elo": 1705.9004544003078
     }
   }
 }

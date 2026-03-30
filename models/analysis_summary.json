@@ -12,20 +12,20 @@
   },
   "classification": {
     "model_type": "random_forest",
-    "test_accuracy": "42.5%",
-    "adjacent_accuracy": "55.8%",
-    "macro_f1": "0.4236"
+    "test_accuracy": "42.6%",
+    "adjacent_accuracy": "55.6%",
+    "macro_f1": "0.4248"
   },
   "clustering": {
     "method": "kmeans",
     "n_clusters": 5,
-    "silhouette_score": "0.1635",
+    "silhouette_score": "0.2098",
     "archetypes": {
-      "0": "Deliberate Player",
-      "1": "Advanced Player",
-      "2": "Fast Player",
-      "3": "Deliberate Player",
-      "4": "Fast Player"
+      "0": "Intermediate Deliberate Player",
+      "1": "Advanced Fast Player",
+      "2": "Advanced Fast Player #2",
+      "3": "Advanced Deliberate Player",
+      "4": "Advanced Fast Player #3"
     }
   }
 }
