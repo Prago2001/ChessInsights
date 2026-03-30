@@ -4,7 +4,7 @@ This document summarizes the chess dataset used by ChessInsight and the current 
 
 ## Dataset summary
 
-- **Source:** Lichess public database (sample file `data_1m_games.pgn`).[cite:5]
+- **Source:** Lichess public database (PGN file `data_1m_games.pgn` containing 350,060 games).[cite:5]
 - **Total games processed:** 350,060 classical and rapid games after cleaning.[cite:5]
 - **Unique players with feature vectors:** 22,725 players aggregated at the player level.[cite:5]
 - **Unique players in raw PGN:** 238,200, including many with only a few games.[cite:5]
@@ -103,7 +103,7 @@ Using the saved clustering statistics, the five clusters can be summarized as fo
   About 37% of players, average Elo ≈ 1796. They play quickly, show higher time variance, and often reach time-pressure situations, but maintain relatively strong results, suggesting experienced fast players.
 
 - **Cluster 3 – Deliberate high-level specialists**  
-  A small but distinct cluster (~0.4% of players, average Elo ≈ 1780) who spend a lot of time especially early in the game and in complex positions, with a high share of Advanced and Expert tiers.
+  A small but distinct cluster (~0.4% of players, average Elo ≈ 1780) who spend a lot of time especially early in the game and in complex positions, with a high share of Advanced and Expert players.
 
 - **Cluster 4 – Fast advanced grinders**  
   Around 22% of players, average Elo ≈ 1803. They combine high Elo with fast play, especially in middlegames and endgames, and experience substantial time pressure but still perform well.

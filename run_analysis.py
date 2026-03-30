@@ -55,6 +55,7 @@ from src.clustering import (
     name_clusters,
     save_clustering_results,
     print_clustering_summary,
+    compare_clustering_methods,
 )
 from src.visualizations import (
     generate_all_visualizations,
@@ -334,16 +335,26 @@ def run_full_pipeline(
     X_cluster, feature_cols = prepare_clustering_data(player_features)
     print(f"Clustering data: {len(X_cluster)} players, {len(feature_cols)} features")
 
-    # Find optimal k
+    # Find optimal k for k-means
     k_results = find_optimal_k(X_cluster.values, k_range=(3, 5))
     optimal_k = k_results["optimal_k"]
 
-    # Perform clustering
+    # Perform primary clustering with k-means
     clustering_results = perform_clustering(
         X_cluster, n_clusters=optimal_k, method="kmeans"
     )
 
-    # Analyze and name clusters
+    # Optionally compare multiple clustering methods and save comparison
+    print("\nEvaluating alternative clustering methods on the same features...")
+    method_comparison_df = compare_clustering_methods(
+        X_cluster, n_clusters=optimal_k
+    )
+    comparison_path = MODELS_DIR / "clustering_method_comparison.csv"
+    method_comparison_df.to_csv(comparison_path, index=False)
+    print(f"Saved clustering method comparison to {comparison_path}")
+    print(method_comparison_df.to_string(index=False))
+
+    # Analyze and name clusters for the primary model
     cluster_stats = analyze_clusters(
         player_features, clustering_results["labels"], feature_cols
     )
